@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t praveentala/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true praveentala/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t praveentala/multi-client ./client
+  - docker build -t praveentala/multi-nginx ./nginx
+  - docker build -t praveentala/multi-server ./server
+  - docker build -t praveentala/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push praveentala/multi-client
+  - docker push praveentala/multi-nginx
+  - docker push praveentala/multi-server
+  - docker push praveentala/multi-worker
+
